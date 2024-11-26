@@ -16,6 +16,7 @@ in  upstream
       , "distributive"
       , "effect"
       , "either"
+      , "enums"
       , "foldable-traversable"
       , "foreign-object"
       , "functors"
