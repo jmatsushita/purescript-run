@@ -21,7 +21,6 @@ import Data.Tuple (Tuple(..))
 import Prim.Row as Row
 import Run (Run)
 import Run as Run
-import Type.Proxy (Proxy(..))
 import Type.Row (type (+))
 
 data Writer w a = Writer w a

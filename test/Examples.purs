@@ -7,7 +7,6 @@ import Effect (Effect)
 import Effect.Console as Console
 import Run (EFFECT, Run, Step(..), interpret, liftEffect, match, on, runAccumPure, runBaseEffect, runCont, send)
 import Run as Run
-import Type.Proxy (Proxy(..))
 import Type.Row (type (+))
 
 data TalkF a

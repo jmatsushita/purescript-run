@@ -30,7 +30,6 @@ import Data.Symbol (class IsSymbol)
 import Prim.Row as Row
 import Run (Run)
 import Run as Run
-import Type.Proxy (Proxy(..))
 import Type.Row (type (+))
 
 newtype Except :: forall k. Type -> k -> Type

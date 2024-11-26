@@ -15,7 +15,6 @@ import Run.Reader (READER, ask, runReader)
 import Run.State (STATE, get, gets, modify, put, putAt, runState, runStateAt)
 import Run.Writer (WRITER, runWriter, tell)
 import Test.Examples as Examples
-import Type.Proxy (Proxy(..))
 import Type.Row (type (+))
 
 data Talk a

@@ -27,7 +27,6 @@ import Data.Tuple (Tuple(..), fst, snd)
 import Prim.Row as Row
 import Run (Run)
 import Run as Run
-import Type.Proxy (Proxy(..))
 import Type.Row (type (+))
 
 data State s a = State (s -> s) (s -> a)

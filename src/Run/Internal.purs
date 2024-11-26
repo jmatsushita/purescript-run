@@ -8,7 +8,7 @@ module Run.Internal
 import Prelude
 
 import Type.Equality (class TypeEquals)
-import Type.Proxy (Proxy(..))
+import Type.Proxy (Proxy)
 import Unsafe.Coerce (unsafeCoerce)
 
 data Choose a
