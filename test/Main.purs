@@ -10,9 +10,9 @@ import Effect (Effect)
 import Effect.Console (logShow, log)
 import Run (EFFECT, Run, lift, liftEffect, on, extract, runBaseEffect, run, send)
 import Run.Choose (CHOOSE, runChoose)
-import Run.Except (EXCEPT, _except, catch, runExcept, runExceptAt, throw, throwAt)
+import Run.Except (EXCEPT, catch, runExcept, runExceptAt, throw, throwAt)
 import Run.Reader (READER, ask, runReader)
-import Run.State (STATE, _state, get, gets, modify, put, putAt, runState, runStateAt)
+import Run.State (STATE, get, gets, modify, put, putAt, runState, runStateAt)
 import Run.Writer (WRITER, runWriter, tell)
 import Test.Examples as Examples
 import Type.Proxy (Proxy(..))
@@ -26,14 +26,11 @@ derive instance functorTalk :: Functor Talk
 
 type TALK r = (talk :: Talk | r)
 
-_talk :: Proxy "talk"
-_talk = Proxy
-
 speak :: forall r. String -> Run (TALK + r) Unit
-speak a = lift _talk $ Speak a unit
+speak a = lift @"talk" $ Speak a unit
 
 listen :: forall r. Run (TALK + r) String
-listen = lift _talk $ Listen identity
+listen = lift @"talk" $ Listen identity
 
 ---
 
@@ -59,9 +56,9 @@ program3 = do
 
 program4 :: forall r. String -> Run (EXCEPT String + STATE String + r) Int
 program4 a = do
-  putAt _state "Hello"
-  if a == "12" then putAt _state "World" $> 12
-  else throwAt _except "Not 12"
+  putAt @"state" "Hello"
+  if a == "12" then putAt @"state" "World" $> 12
+  else throwAt @"except" "Not 12"
 
 type MyEffects =
   ( STATE Int
@@ -120,7 +117,7 @@ main = do
   logShow res1
 
   let
-    runSpeak = send # on _talk case _ of
+    runSpeak = send # on @"talk" case _ of
       Speak str a -> liftEffect (log str) $> a
       Listen reply -> pure $ reply "Gerald"
 
@@ -128,9 +125,9 @@ main = do
     # run runSpeak
     # runBaseEffect
 
-  program4 "42" # runStateAt _state "" # runExceptAt _except # extract # logShow
-  program4 "42" # runExceptAt _except # runStateAt _state "" # extract # logShow
-  program4 "12" # runStateAt _state "" # runExceptAt _except # extract # logShow
+  program4 "42" # runStateAt @"state" "" # runExceptAt @"except" # extract # logShow
+  program4 "42" # runExceptAt @"except" # runStateAt @"state" "" # extract # logShow
+  program4 "12" # runStateAt @"state" "" # runExceptAt @"except" # extract # logShow
 
   yesProgram
     # catch (liftEffect <<< log)

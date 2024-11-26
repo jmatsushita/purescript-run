@@ -47,7 +47,7 @@ import Effect.Class (class MonadEffect)
 import Effect.Class as Effect
 import Partial.Unsafe (unsafeCrashWith)
 import Prim.Row as Row
-import Run.Internal (Choose(..), CHOOSE, _choose, fromRows, toRows)
+import Run.Internal (Choose(..), CHOOSE, fromRows, toRows)
 import Type.Equality (class TypeEquals)
 import Type.Proxy (Proxy(..))
 import Type.Row (type (+))
@@ -114,14 +114,13 @@ instance monadRecRun :: MonadRec (Run r) where
 -- | Lifts an effect functor into the `Run` Monad according to the provided
 -- | `Proxy` slot.
 lift
-  :: forall sym r1 r2 f a
+  :: forall @sym r1 r2 f a
    . Row.Cons sym f r1 r2
   => IsSymbol sym
   => Functor f
-  => Proxy sym
-  -> f a
+  => f a
   -> Run r2 a
-lift p = Run <<< liftF <<< inj p
+lift = Run <<< liftF <<< inj @sym
 
 -- | Reflects the next instruction or the final value if there are no more
 -- | instructions.
@@ -315,7 +314,7 @@ type EFFECT r = (effect :: Effect | r)
 
 -- Lift an `Effect` effect into the `Run` Monad via the `effect` label.
 liftEffect :: forall r. Effect ~> Run (EFFECT + r)
-liftEffect = lift (Proxy :: Proxy "effect")
+liftEffect = lift @"effect"
 
 -- | Runs a base `Effect` effect.
 runBaseEffect :: Run (EFFECT + ()) ~> Effect
@@ -326,7 +325,7 @@ type AFF r = (aff :: Aff | r)
 
 -- | Lift an `Aff` effect into the `Run` Monad via the `aff` label.
 liftAff :: forall r. Aff ~> Run (AFF + r)
-liftAff = lift (Proxy :: Proxy "aff")
+liftAff = lift @"aff"
 
 -- | Runs a base `Aff` effect.
 runBaseAff :: Run (AFF + ()) ~> Aff
@@ -345,7 +344,7 @@ instance runMonadAff :: (TypeEquals (Proxy r1) (Proxy (AFF + EFFECT + r2))) => M
   liftAff = fromRows <<< liftAff
 
 liftChoose :: forall r a. Choose a -> Run (CHOOSE + r) a
-liftChoose = lift _choose
+liftChoose = lift @"choose"
 
 instance runAlt :: (TypeEquals (Proxy r1) (Proxy (CHOOSE + r2))) => Alt (Run r1) where
   alt a b = fromRows $ liftChoose (Alt identity) >>= if _ then toRows a else toRows b

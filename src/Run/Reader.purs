@@ -1,7 +1,6 @@
 module Run.Reader
   ( Reader(..)
   , READER
-  , _reader
   , liftReader
   , liftReaderAt
   , ask
@@ -30,58 +29,51 @@ derive newtype instance functorReader :: Functor (Reader e)
 
 type READER e r = (reader :: Reader e | r)
 
-_reader :: Proxy "reader"
-_reader = Proxy
-
 liftReader :: forall e a r. Reader e a -> Run (READER e + r) a
-liftReader = liftReaderAt _reader
+liftReader = liftReaderAt @"reader"
 
 liftReaderAt
-  :: forall t e a r s
+  :: forall t e a r @s
    . IsSymbol s
   => Row.Cons s (Reader e) t r
-  => Proxy s
-  -> Reader e a
+  => Reader e a
   -> Run r a
-liftReaderAt = Run.lift
+liftReaderAt = Run.lift @s
 
 ask :: forall e r. Run (READER e + r) e
-ask = askAt _reader
+ask = askAt @"reader"
 
 askAt
-  :: forall t e r s
+  :: forall t e r @s
    . IsSymbol s
   => Row.Cons s (Reader e) t r
-  => Proxy s
-  -> Run r e
-askAt sym = asksAt sym identity
+  => Run r e
+askAt = asksAt @s identity
 
 asks :: forall e r a. (e -> a) -> Run (READER e + r) a
-asks = asksAt _reader
+asks = asksAt @"reader"
 
 asksAt
-  :: forall t e r s a
+  :: forall t e r @s a
    . IsSymbol s
   => Row.Cons s (Reader e) t r
-  => Proxy s
-  -> (e -> a)
+  => (e -> a)
   -> Run r a
-asksAt sym f = liftReaderAt sym (Reader f)
+asksAt f = liftReaderAt @s (Reader f)
 
 local :: forall e a r. (e -> e) -> Run (READER e + r) a -> Run (READER e + r) a
-local = localAt _reader
+local = localAt @"reader"
 
 localAt
-  :: forall t e a r s
+  :: forall t e a r @s
    . IsSymbol s
   => Row.Cons s (Reader e) t r
-  => Proxy s
-  -> (e -> e)
+  => (e -> e)
   -> Run r a
   -> Run r a
-localAt sym = \f r -> map f (askAt sym) >>= flip runLocal r
+localAt = \f r -> map f (askAt @s) >>= flip runLocal r
   where
-  handle = Run.on sym Left Right
+  handle = Run.on @s Left Right
   runLocal = loop
     where
     loop e r = case Run.peel r of
@@ -94,24 +86,23 @@ localAt sym = \f r -> map f (askAt sym) >>= flip runLocal r
         pure a
 
 runReader :: forall e a r. e -> Run (READER e + r) a -> Run r a
-runReader = runReaderAt _reader
+runReader = runReaderAt @"reader"
 
 runReaderAt
-  :: forall t e a r s
+  :: forall t e a r @s
    . IsSymbol s
   => Row.Cons s (Reader e) t r
-  => Proxy s
-  -> e
+  => e
   -> Run r a
   -> Run t a
-runReaderAt sym = loop
+runReaderAt = loop
   where
-  handle = Run.on sym Left Right
+  handle = Run.on @s Left Right
   loop e r = case Run.peel r of
     Left a -> case handle a of
       Left (Reader k) ->
         loop e (k e)
       Right a' ->
-        Run.send a' >>= runReaderAt sym e
+        Run.send a' >>= runReaderAt @s e
     Right a ->
       pure a

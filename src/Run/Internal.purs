@@ -1,7 +1,6 @@
 module Run.Internal
   ( Choose(..)
   , CHOOSE
-  , _choose
   , toRows
   , fromRows
   ) where
@@ -19,9 +18,6 @@ data Choose a
 derive instance functorChoose :: Functor Choose
 
 type CHOOSE r = (choose :: Choose | r)
-
-_choose :: Proxy "choose"
-_choose = Proxy
 
 toRows
   :: forall f r1 r2 a

@@ -2,7 +2,6 @@ module Run.Except
   ( Except(..)
   , EXCEPT
   , FAIL
-  , _except
   , liftExcept
   , liftExceptAt
   , runExcept
@@ -48,95 +47,85 @@ type Fail = Except Unit
 type FAIL :: forall k. Row (k -> Type) -> Row (k -> Type)
 type FAIL r = EXCEPT Unit r
 
-_except :: Proxy "except"
-_except = Proxy
-
 liftExcept :: forall e a r. Except e a -> Run (EXCEPT e + r) a
-liftExcept = liftExceptAt _except
+liftExcept = liftExceptAt @"except"
 
 liftExceptAt
-  :: forall t e a r s
+  :: forall t e a r @s
    . IsSymbol s
   => Row.Cons s (Except e) t r
-  => Proxy s
-  -> Except e a
+  => Except e a
   -> Run r a
-liftExceptAt = Run.lift
+liftExceptAt = Run.lift @s
 
 throw :: forall e a r. e -> Run (EXCEPT e + r) a
-throw = throwAt _except
+throw = throwAt @"except"
 
 throwAt
-  :: forall t e a r s
+  :: forall t e a r @s
    . IsSymbol s
   => Row.Cons s (Except e) t r
-  => Proxy s
-  -> e
+  => e
   -> Run r a
-throwAt sym = liftExceptAt sym <<< Except
+throwAt = liftExceptAt @s <<< Except
 
 fail :: forall a r. Run (FAIL + r) a
-fail = failAt _except
+fail = failAt @"except"
 
 failAt
-  :: forall t a r s
+  :: forall t a r @s
    . IsSymbol s
   => Row.Cons s Fail t r
-  => Proxy s
-  -> Run r a
-failAt sym = throwAt sym unit
+  => Run r a
+failAt = throwAt @s unit
 
 rethrow :: forall e a r. Either e a -> Run (EXCEPT e + r) a
-rethrow = rethrowAt _except
+rethrow = rethrowAt @"except"
 
 rethrowAt
-  :: forall t e a r s
+  :: forall t e a r @s
    . IsSymbol s
   => Row.Cons s (Except e) t r
-  => Proxy s
-  -> Either e a
+  => Either e a
   -> Run r a
-rethrowAt sym = either (throwAt sym) pure
+rethrowAt = either (throwAt @s) pure
 
 note :: forall e a r. e -> Maybe a -> Run (EXCEPT e + r) a
-note = noteAt _except
+note = noteAt @"except"
 
 noteAt
-  :: forall t e a r s
+  :: forall t e a r @s
    . IsSymbol s
   => Row.Cons s (Except e) t r
-  => Proxy s
-  -> e
+  => e
   -> Maybe a
   -> Run r a
-noteAt sym e = maybe' (\_ -> throwAt sym e) pure
+noteAt e = maybe' (\_ -> throwAt @s e) pure
 
 fromJust :: forall a r. Maybe a -> Run (FAIL + r) a
-fromJust = fromJustAt _except
+fromJust = fromJustAt @"except"
 
 fromJustAt
-  :: forall t a r s
+  :: forall t a r @s
    . IsSymbol s
   => Row.Cons s Fail t r
-  => Proxy s
-  -> Maybe a
+  => Maybe a
   -> Run r a
-fromJustAt sym = noteAt sym unit
+fromJustAt = noteAt @s unit
 
 catch :: forall e a r. (e -> Run r a) -> Run (EXCEPT e + r) a -> Run r a
-catch = catchAt _except
+catch = catchAt @"except"
 
 catchAt
-  :: forall t e a r s
+  :: forall t e a r @s
    . IsSymbol s
   => Row.Cons s (Except e) t r
-  => Proxy s
-  -> (e -> Run t a)
+  => (e -> Run t a)
   -> Run r a
   -> Run t a
-catchAt sym = loop
+catchAt = loop
   where
-  handle = Run.on sym Left Right
+  handle = Run.on @s Left Right
   loop k r = case Run.peel r of
     Left a -> case handle a of
       Left (Except e) ->
@@ -147,18 +136,17 @@ catchAt sym = loop
       pure a
 
 runExcept :: forall e a r. Run (EXCEPT e + r) a -> Run r (Either e a)
-runExcept = runExceptAt _except
+runExcept = runExceptAt @"except"
 
 runExceptAt
-  :: forall t e a r s
+  :: forall t e a r @s
    . IsSymbol s
   => Row.Cons s (Except e) t r
-  => Proxy s
-  -> Run r a
+  => Run r a
   -> Run t (Either e a)
-runExceptAt sym = loop
+runExceptAt = loop
   where
-  handle = Run.on sym Left Right
+  handle = Run.on @s Left Right
   loop r = case Run.peel r of
     Left a -> case handle a of
       Left (Except e) ->
@@ -169,13 +157,12 @@ runExceptAt sym = loop
       pure (Right a)
 
 runFail :: forall a r. Run (FAIL + r) a -> Run r (Maybe a)
-runFail = runFailAt _except
+runFail = runFailAt @"except"
 
 runFailAt
-  :: forall t a r s
+  :: forall t a r @s
    . IsSymbol s
   => Row.Cons s Fail t r
-  => Proxy s
-  -> Run r a
+  => Run r a
   -> Run t (Maybe a)
-runFailAt sym = map (either (const Nothing) Just) <<< runExceptAt sym
+runFailAt = map (either (const Nothing) Just) <<< runExceptAt @s

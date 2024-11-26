@@ -1,7 +1,6 @@
 module Run.State
   ( State(..)
   , STATE
-  , _state
   , liftState
   , liftStateAt
   , modify
@@ -37,82 +36,73 @@ derive instance functorState :: Functor (State s)
 
 type STATE s r = (state :: State s | r)
 
-_state :: Proxy "state"
-_state = Proxy
-
 liftState :: forall s a r. State s a -> Run (STATE s + r) a
-liftState = liftStateAt _state
+liftState = liftStateAt @"state"
 
 liftStateAt
-  :: forall q sym s a r
+  :: forall q @sym s a r
    . IsSymbol sym
   => Row.Cons sym (State s) q r
-  => Proxy sym
-  -> State s a
+  => State s a
   -> Run r a
-liftStateAt = Run.lift
+liftStateAt = Run.lift @sym
 
 modify :: forall s r. (s -> s) -> Run (STATE s + r) Unit
-modify = modifyAt _state
+modify = modifyAt @"state"
 
 modifyAt
-  :: forall q sym s r
+  :: forall q @sym s r
    . IsSymbol sym
   => Row.Cons sym (State s) q r
-  => Proxy sym
-  -> (s -> s)
+  => (s -> s)
   -> Run r Unit
-modifyAt sym f = liftStateAt sym $ State f (const unit)
+modifyAt f = liftStateAt @sym $ State f (const unit)
 
 put :: forall s r. s -> Run (STATE s + r) Unit
-put = putAt _state
+put = putAt @"state"
 
 putAt
-  :: forall q sym s r
+  :: forall q @sym s r
    . IsSymbol sym
   => Row.Cons sym (State s) q r
-  => Proxy sym
-  -> s
+  => s
   -> Run r Unit
-putAt sym = modifyAt sym <<< const
+putAt = modifyAt @sym <<< const
 
 get :: forall s r. Run (STATE s + r) s
-get = getAt _state
+get = getAt @"state"
 
 getAt
-  :: forall q sym s r
+  :: forall q @sym s r
    . IsSymbol sym
   => Row.Cons sym (State s) q r
-  => Proxy sym
-  -> Run r s
-getAt sym = liftStateAt sym $ State identity identity
+  => Run r s
+getAt = liftStateAt @sym $ State identity identity
 
 gets :: forall s t r. (s -> t) -> Run (STATE s + r) t
-gets = getsAt _state
+gets = getsAt @"state"
 
 getsAt
-  :: forall q sym s t r
+  :: forall q @sym s t r
    . IsSymbol sym
   => Row.Cons sym (State s) q r
-  => Proxy sym
-  -> (s -> t)
+  => (s -> t)
   -> Run r t
-getsAt sym = flip map (getAt sym)
+getsAt = flip map (getAt @sym)
 
 runState :: forall s r a. s -> Run (STATE s + r) a -> Run r (Tuple s a)
-runState = runStateAt _state
+runState = runStateAt @"state"
 
 runStateAt
-  :: forall q sym s r a
+  :: forall q @sym s r a
    . IsSymbol sym
   => Row.Cons sym (State s) q r
-  => Proxy sym
-  -> s
+  => s
   -> Run r a
   -> Run q (Tuple s a)
-runStateAt sym = loop
+runStateAt = loop
   where
-  handle = Run.on sym Left Right
+  handle = Run.on @sym Left Right
   loop s r = case Run.peel r of
     Left a -> case handle a of
       Left (State t k) ->
@@ -121,32 +111,30 @@ runStateAt sym = loop
         in
           loop s' (k s')
       Right a' ->
-        Run.send a' >>= runStateAt sym s
+        Run.send a' >>= runStateAt @sym s
     Right a ->
       pure (Tuple s a)
 
 evalState :: forall s r a. s -> Run (STATE s + r) a -> Run r a
-evalState = evalStateAt _state
+evalState = evalStateAt @"state"
 
 evalStateAt
-  :: forall q sym s r a
+  :: forall q @sym s r a
    . IsSymbol sym
   => Row.Cons sym (State s) q r
-  => Proxy sym
-  -> s
+  => s
   -> Run r a
   -> Run q a
-evalStateAt sym s = map snd <<< runStateAt sym s
+evalStateAt s = map snd <<< runStateAt @sym s
 
 execState :: forall s r a. s -> Run (STATE s + r) a -> Run r s
-execState = execStateAt _state
+execState = execStateAt @"state"
 
 execStateAt
-  :: forall q sym s r a
+  :: forall q @sym s r a
    . IsSymbol sym
   => Row.Cons sym (State s) q r
-  => Proxy sym
-  -> s
+  => s
   -> Run r a
   -> Run q s
-execStateAt sym s = map fst <<< runStateAt sym s
+execStateAt s = map fst <<< runStateAt @sym s

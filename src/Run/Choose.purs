@@ -12,11 +12,11 @@ import Control.Alternative (class Alternative, alt, empty)
 import Data.Either (Either(..))
 import Run (Run)
 import Run as Run
-import Run.Internal (Choose(..), CHOOSE, _choose)
+import Run.Internal (Choose(..), CHOOSE)
 import Type.Row (type (+))
 
 liftChoose :: forall r a. Choose a -> Run (CHOOSE + r) a
-liftChoose = Run.lift _choose
+liftChoose = Run.lift @"choose"
 
 cempty :: forall r a. Run (CHOOSE + r) a
 cempty = empty
@@ -27,7 +27,7 @@ calt = alt
 runChoose :: forall f a r. Alternative f => Run (CHOOSE + r) a -> Run r (f a)
 runChoose = loop
   where
-  handle = Run.on _choose Left Right
+  handle = Run.on @"choose" Left Right
   loop r = case Run.peel r of
     Left a -> case handle a of
       Left a' -> case a' of

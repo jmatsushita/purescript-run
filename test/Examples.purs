@@ -18,13 +18,11 @@ derive instance functorTalkF :: Functor TalkF
 
 type TALK r = (talk :: TalkF | r)
 
-_talk = Proxy :: Proxy "talk"
-
 speak :: forall r. String -> Run (TALK + r) Unit
-speak str = Run.lift _talk (Speak str unit)
+speak str = Run.lift @"talk" (Speak str unit)
 
 listen :: forall r. Run (TALK + r) String
-listen = Run.lift _talk (Listen identity)
+listen = Run.lift @"talk" (Listen identity)
 
 handleTalk :: forall r. TalkF ~> Run (EFFECT + r)
 handleTalk = case _ of
@@ -38,7 +36,7 @@ runTalk
   :: forall r
    . Run (EFFECT + TALK + r)
        ~> Run (EFFECT + r)
-runTalk = interpret (on _talk handleTalk send)
+runTalk = interpret (on @"talk" handleTalk send)
 
 ---
 
@@ -55,13 +53,11 @@ derive instance functorDinnerF :: Functor DinnerF
 
 type DINNER r = (dinner :: DinnerF | r)
 
-_dinner = Proxy :: Proxy "dinner"
-
 eat :: forall r. Food -> Run (DINNER + r) IsThereMore
-eat food = Run.lift _dinner (Eat food identity)
+eat food = Run.lift @"dinner" (Eat food identity)
 
 checkPlease :: forall r. Run (DINNER + r) Bill
-checkPlease = Run.lift _dinner (CheckPlease identity)
+checkPlease = Run.lift @"dinner" (CheckPlease identity)
 
 type Tally = { stock :: Int, bill :: Bill }
 
@@ -80,7 +76,7 @@ handleDinner tally = case _ of
 
 runDinnerPure :: forall r a. Tally -> Run (DINNER + r) a -> Run r (Tuple Bill a)
 runDinnerPure = runAccumPure
-  (\tally -> on _dinner (Loop <<< handleDinner tally) Done)
+  (\tally -> on @"dinner" (Loop <<< handleDinner tally) Done)
   (\tally a -> Tuple tally.bill a)
 
 ---
@@ -117,10 +113,8 @@ derive instance functorLogF :: Functor LogF
 
 type LOG r = (log :: LogF | r)
 
-_log = Proxy :: Proxy "log"
-
 log :: forall r. String -> Run (LOG + r) Unit
-log str = Run.lift _log (Log str unit)
+log str = Run.lift @"log" (Log str unit)
 
 ---
 
@@ -130,10 +124,8 @@ derive instance functorSleepF :: Functor SleepF
 
 type SLEEP r = (sleep :: SleepF | r)
 
-_sleep = Proxy :: Proxy "sleep"
-
 sleep :: forall r. Int -> Run (SLEEP + r) Unit
-sleep ms = Run.lift _sleep (Sleep ms unit)
+sleep ms = Run.lift @"sleep" (Sleep ms unit)
 
 ---
 
